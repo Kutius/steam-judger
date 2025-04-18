@@ -4,6 +4,32 @@ const isLoading = ref(false)
 const router = useRouter()
 const error = ref('')
 
+// 如果后续能够正常访问Steam API，
+// 可以添加一个时间限制，
+// 用户只能在12:00-14:00尝试生成锐评价，
+// 减少频率以确保获取Steam API不被限制。
+
+// 后续还能添加一个计数器，
+// 限制24小时内只能在有限次数内访问Steam API
+
+// 获取当前静态时间
+
+const staticTime = new Date().toLocaleTimeString()
+
+// 创建一个函数，检查当前时间是否在12:00-14:00之间
+function checkTime(timeString){
+  const front = 12 * 60;  //24Сʱ��12��00
+  const rear = 14 * 60;   //24Сʱ��14��00
+
+  const timeParts = timeString.match(/(\d{1,2}):(\d{2})/);
+  let hours = parseInt(timeParts[1], 10);
+  const minutes = parseInt(timeParts[2], 10);
+
+  const total = hours * 60 + minutes;
+
+  return total >= front && total <= rear;
+}
+
 function extractSteamIdFromUrl(url: string) {
   // 1. https://web.xiaoheihe.cn/account/steam_personal_page/home?userid=14979940&steam_id=76561198438622263&heybox_id=14979940
   // 2. https://steamcommunity.com/profiles/76561198438622263/
@@ -24,7 +50,11 @@ async function handleSubmit() {
 
   const _steamId = extractSteamIdFromUrl(steamId.value)
 
-  try {
+  // 添加判断：
+  // 如果处于10:00-14:00，
+  // 进入try语句，获取Steam API
+  if (checkTime(staticTime)){
+    try {
     // 调用获取/缓存Steam游戏数据API
     const response = await fetch(`/api/games/${encodeURIComponent(_steamId)}`)
 
@@ -49,6 +79,11 @@ async function handleSubmit() {
     error.value = err.message || '获取游戏数据失败，请稍后重试'
     isLoading.value = false
   }
+}
+else{
+  error.value = '当前时间不可访问'
+  isLoading.value = false
+}
 }
 </script>
 
