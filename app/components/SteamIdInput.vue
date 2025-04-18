@@ -4,6 +4,31 @@ const isLoading = ref(false)
 const router = useRouter()
 const error = ref('')
 
+// Èç¹ûºóĞøÄÜ¹»Õı³£·ÃÎÊSteam API£¬
+// ¿ÉÒÔÌí¼ÓÒ»¸öÊ±¼äÏŞÖÆ£¬
+// ÓÃ»§Ö»ÄÜÔÚ12:00-14:00³¢ÊÔÉú³ÉÈñÆÀ¼Û£¬
+// ¼õÉÙÆµÂÊÒÔÈ·±£»ñÈ¡Steam API²»±»ÏŞÖÆ¡£
+
+// ºóĞø»¹ÄÜÌí¼ÓÒ»¸ö¼ÆÊıÆ÷£¬
+// ÏŞÖÆ24Ğ¡Ê±ÄÚÖ»ÄÜÔÚÓĞÏŞ´ÎÊıÄÚ·ÃÎÊSteam API
+
+// »ñÈ¡µ±Ç°¾²Ì¬Ê±¼ä
+const staticTime = new Date().toLocaleTimeString()
+
+// ´´½¨Ò»¸öº¯Êı£¬¼ì²éµ±Ç°Ê±¼äÊÇ·ñÔÚ12:00-14:00Ö®¼ä
+function checkTime(timeString){
+  const front = 12 * 60;  //24Ğ¡Ê±ÖÆ12£º00
+  const rear = 14 * 60;   //24Ğ¡Ê±ÖÆ14£º00
+
+  const timeParts = timeString.match(/(\d{1,2}):(\d{2})/);
+  let hours = parseInt(timeParts[1], 10);
+  const minutes = parseInt(timeParts[2], 10);
+
+  const total = hours * 60 + minutes;
+
+  return total >= front && total <= rear;
+}
+
 function extractSteamIdFromUrl(url: string) {
   // 1. https://web.xiaoheihe.cn/account/steam_personal_page/home?userid=14979940&steam_id=76561198438622263&heybox_id=14979940
   // 2. https://steamcommunity.com/profiles/76561198438622263/
@@ -24,31 +49,40 @@ async function handleSubmit() {
 
   const _steamId = extractSteamIdFromUrl(steamId.value)
 
-  try {
-    // è°ƒç”¨è·å–/ç¼“å­˜Steamæ¸¸æˆæ•°æ®API
+  // Ìí¼ÓÅĞ¶Ï£º
+  // Èç¹û´¦ÓÚ10:00-14:00£¬
+  // ½øÈëtryÓï¾ä£¬»ñÈ¡Steam API
+  if (checkTime(staticTime)){
+    try {
+    // µ÷ÓÃ»ñÈ¡/»º´æSteamÓÎÏ·Êı¾İAPI
     const response = await fetch(`/api/games/${encodeURIComponent(_steamId)}`)
 
     if (!response.ok) {
       const errorData = await response.text()
-      throw new Error(errorData || 'è·å–æ¸¸æˆæ•°æ®å¤±è´¥')
+      throw new Error(errorData || '»ñÈ¡ÓÎÏ·Êı¾İÊ§°Ü')
     }
 
     const data = await response.json()
 
-    // æ£€æŸ¥æ¸¸æˆæ•°é‡ï¼Œå¦‚æœä¸º0åˆ™æç¤ºç”¨æˆ·
+    // ¼ì²éÓÎÏ·ÊıÁ¿£¬Èç¹ûÎª0ÔòÌáÊ¾ÓÃ»§
     if (data.gameCount === 0) {
-      error.value = 'æ‚¨çš„Steamè´¦å·æ¸¸æˆæ•°æ®ä¸ºç©ºï¼Œæˆ–è€…æ•°æ®æœåŠ¡å¼‚å¸¸ï¼Œè¯·ç¨åé‡è¯•'
+      error.value = 'ÄúµÄSteamÕËºÅÓÎÏ·Êı¾İÎª¿Õ£¬»òÕßÊı¾İ·şÎñÒì³££¬ÇëÉÔºóÖØÊÔ'
       isLoading.value = false
       return
     }
 
-    // è·³è½¬åˆ°ç»“æœé¡µé¢ï¼Œå¹¶ä¼ é€’steamIdå’ŒdataIdå‚æ•°
+    // Ìø×ªµ½½á¹ûÒ³Ãæ£¬²¢´«µİsteamIdºÍdataId²ÎÊı
     router.push(`/review?steamId=${encodeURIComponent(_steamId)}&dataId=${encodeURIComponent(data.dataId)}`)
   }
   catch (err: any) {
-    error.value = err.message || 'è·å–æ¸¸æˆæ•°æ®å¤±è´¥ï¼Œè¯·ç¨åé‡è¯•'
+    error.value = err.message || '»ñÈ¡ÓÎÏ·Êı¾İÊ§°Ü£¬ÇëÉÔºóÖØÊÔ'
     isLoading.value = false
   }
+}
+else{
+  error.value = 'µ±Ç°Ê±¼ä²»¿É·ÃÎÊ'
+  isLoading.value = false
+}
 }
 </script>
 
@@ -66,7 +100,7 @@ async function handleSubmit() {
           id="steam-id"
           v-model="steamId"
           type="text"
-          placeholder="è¾“å…¥ Steam ID / ä¸»é¡µé“¾æ¥"
+          placeholder="ÊäÈë Steam ID / Ö÷Ò³Á´½Ó"
           class="outline-none text-sm px-3 py-2.5 border border-gray-200 rounded-lg bg-white w-full transition sm:text-base sm:px-4 sm:py-3 dark:border-gray-700 focus:border-transparent dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
           :disabled="isLoading"
           @keyup.enter="handleSubmit"
@@ -77,7 +111,7 @@ async function handleSubmit() {
         <a href="https://help.steampowered.com/zh-cn/faqs/view/2816-BE67-5B69-0FEC" target="_blank" class="text-blue-500 hover:underline">å¦‚ä½•æŸ¥æ‰¾æˆ‘çš„Steam ID?</a>
       </div>
 
-      <!-- é”™è¯¯ä¿¡æ¯æ˜¾ç¤º -->
+      <!-- ´íÎóĞÅÏ¢ÏÔÊ¾ -->
       <div v-if="error" class="text-sm text-red-500 mt-2 flex gap-1 items-center">
         <span class="i-carbon-warning" />
         <span>{{ error }}</span>
@@ -92,14 +126,14 @@ async function handleSubmit() {
     >
       <span v-if="isLoading" class="i-carbon-circle-dash animate-spin" />
       <span v-else class="i-carbon-analytics" />
-      {{ isLoading ? 'ç”Ÿæˆä¸­...' : 'ç”ŸæˆAIé”è¯„' }}
+      {{ isLoading ? 'Éú³ÉÖĞ...' : 'Éú³ÉAIÈñÆÀ' }}
     </button>
     <!-- <button
       class="text-sm text-white font-medium px-4 py-2.5 rounded-lg bg-blue-600 flex gap-2 w-full transition-colors items-center justify-center sm:text-base sm:px-6 sm:py-3 hover:bg-blue-700"
       :class="{ 'opacity-70 cursor-not-allowed': isLoading }"
       :disabled="isLoading || !steamId"
     >
-     Steam æ•°æ®æ¥å£è¢«é™åˆ¶è®¿é—® æ­£åœ¨å¯»æ±‚è§£å†³æ–¹æ¡ˆ
+     Steam Êı¾İ½Ó¿Ú±»ÏŞÖÆ·ÃÎÊ ÕıÔÚÑ°Çó½â¾ö·½°¸
     </button> -->
   </div>
 </template>
