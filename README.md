@@ -6,8 +6,8 @@
 
 关联仓库：
 
-- [Steam Judger - Steam 游戏库吐槽姬 (Frontend)](github.com/kutius/steam-judger)
-- [Steam Judger - Steam 游戏库吐槽姬 (Backend)](github.com/kutius/steam-judger-backend)
+- [Steam Judger - Steam 游戏库吐槽姬 (Frontend)](https://github.com/kutius/steam-judger)
+- [Steam Judger - Steam 游戏库吐槽姬 (Backend)](https://github.com/kutius/steam-judger-backend)
 
 ## ✨ 主要功能
 
